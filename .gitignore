@@ -1,0 +1,10 @@
+# Node.js (Angular)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Java (Spring Boot)
+backend/target/
+backend/*.log
+backend/.env
+
