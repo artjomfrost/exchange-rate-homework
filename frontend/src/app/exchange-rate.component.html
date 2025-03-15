@@ -1,0 +1,20 @@
+<label for="currency">Choose currency:</label>
+<select id="currency" [(ngModel)]="selectedCurrency" (change)="loadExchangeRateHistory()">
+  <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+</select>
+
+<h2 *ngIf="exchangeRateHistory.length > 0">Exchange rate history for: {{ selectedCurrency }}</h2>
+<table *ngIf="exchangeRateHistory.length > 0">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let entry of exchangeRateHistory">
+      <td>{{ entry.date }}</td>
+      <td>{{ entry.rate }}</td>
+    </tr>
+  </tbody>
+</table>
