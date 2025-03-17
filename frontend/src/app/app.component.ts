@@ -7,4 +7,6 @@ import { ExchangeRateComponent } from './exchange-rate.component';
   imports: [ExchangeRateComponent],
   template: '<app-exchange-rate></app-exchange-rate>'
 })
-export class AppComponent {}
+export class AppComponent {
+  title = 'Exchange Rate Portal';
+}

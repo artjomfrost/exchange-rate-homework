@@ -1,14 +1,19 @@
 package com.example.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 import com.example.model.ExchangeRate;
-import java.time.LocalDate;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
-@Repository
 public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, Long> {
-    List<ExchangeRate> findByCurrency(String currency);
+
     Optional<ExchangeRate> findByCurrencyAndDate(String currency, LocalDate date);
+    List<ExchangeRate> findByDate(LocalDate date);
+    List<ExchangeRate> findByCurrency(String currency);
+    List<ExchangeRate> findByCurrencyOrderByDateDesc(String currency);
+
+    @Query("SELECT DISTINCT e.currency FROM ExchangeRate e")
+    List<String> getDistinctCurrencies();
 }

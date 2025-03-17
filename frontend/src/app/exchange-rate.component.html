@@ -1,20 +1,52 @@
-<label for="currency">Choose currency:</label>
-<select id="currency" [(ngModel)]="selectedCurrency" (change)="loadExchangeRateHistory()">
-  <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
-</select>
+<div class="container">
+  <h1>Currency Exchange Calculator</h1>
 
-<h2 *ngIf="exchangeRateHistory.length > 0">Exchange rate history for: {{ selectedCurrency }}</h2>
-<table *ngIf="exchangeRateHistory.length > 0">
-  <thead>
-    <tr>
-      <th>Date</th>
-      <th>Rate</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let entry of exchangeRateHistory">
-      <td>{{ entry.date }}</td>
-      <td>{{ entry.rate }}</td>
-    </tr>
-  </tbody>
-</table>
+  <div class="section">
+    <label>Enter Amount</label>
+    <input type="number" [(ngModel)]="amount" placeholder="Enter amount">
+  </div>
+
+  <div class="section">
+    <label>Choose Currencies</label>
+
+    <label for="fromCurrency">From currency:</label>
+    <select id="fromCurrency" [(ngModel)]="fromCurrency">
+      <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+    </select>
+
+    <label for="toCurrency">To currency:</label>
+    <select id="toCurrency" [(ngModel)]="toCurrency">
+      <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+    </select>
+  </div>
+
+  <button (click)="convertCurrency()">Convert</button>
+
+  <div *ngIf="convertedAmount" class="section">
+    <p><strong>Result:</strong> {{ amount }} {{ fromCurrency }} → {{ convertedAmount }} {{ toCurrency }}</p>
+    <p><strong>Exchange rate:</strong> {{ exchangeRate }}</p>
+  </div>
+
+  <div class="section">
+    <label for="currency">View Exchange Rate History</label>
+    <select id="currency" [(ngModel)]="selectedCurrency" (change)="loadExchangeRateHistory()">
+      <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+    </select>
+  </div>
+
+  <h2 *ngIf="exchangeRateHistory.length > 0">Exchange rate history for: {{ selectedCurrency }}</h2>
+  <table *ngIf="exchangeRateHistory.length > 0">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let entry of exchangeRateHistory">
+        <td>{{ entry.date }}</td>
+        <td>{{ entry.rate }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

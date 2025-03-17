@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.service.ExchangeRateService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -29,13 +30,18 @@ public class ExchangeRateController {
         return exchangeRateService.getExchangeRates();
     }
 
-    @GetMapping("/test-xml")
-    public String testXmlFetch() {
-        return exchangeRateService.fetchExchangeRates();
-    }
-
     @GetMapping("/exchange-rates/{currency}/history")
     public List<Map<String, Object>> getHistory(@PathVariable String currency) {
         return exchangeRateService.getHistory(currency);
+    }
+
+    @GetMapping("/convert")
+    public ResponseEntity<Map<String, Object>> convertCurrency(
+            @RequestParam double amount,
+            @RequestParam String fromCurrency,
+            @RequestParam String toCurrency) {
+        
+        Map<String, Object> result = exchangeRateService.convertCurrency(amount, fromCurrency, toCurrency);
+        return ResponseEntity.ok(result);
     }
 }

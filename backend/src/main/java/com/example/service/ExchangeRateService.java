@@ -16,13 +16,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.List;
-
+import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Service
 public class ExchangeRateService {
@@ -35,17 +30,17 @@ public class ExchangeRateService {
         this.exchangeRateRepository = exchangeRateRepository;
     }
 
-    public String fetchExchangeRates() {
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(ECB_URL, String.class);
-    }
-
     public Map<String, Double> getExchangeRates() {
         String xmlData = fetchExchangeRates();
         return parseXML(xmlData);
     }
 
-    private Map<String, Double> parseXML(String xmlData) {
+    public String fetchExchangeRates() {
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(ECB_URL, String.class);
+    }
+
+    public Map<String, Double> parseXML(String xmlData) {
         Map<String, Double> exchangeRates = new HashMap<>();
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -53,15 +48,12 @@ public class ExchangeRateService {
             Document document = builder.parse(new ByteArrayInputStream(xmlData.getBytes(StandardCharsets.UTF_8)));
 
             NodeList cubes = document.getElementsByTagName("Cube");
+            exchangeRates.put("EUR", 1.0); // Евро - базовая валюта
+
             for (int i = 0; i < cubes.getLength(); i++) {
                 Element element = (Element) cubes.item(i);
-                String baseCurrency = "EUR";
-                exchangeRates.put(baseCurrency, 1.0);
-                
                 if (element.hasAttribute("currency") && element.hasAttribute("rate")) {
-                    String currency = element.getAttribute("currency");
-                    Double rate = Double.parseDouble(element.getAttribute("rate"));
-                    exchangeRates.put(currency, rate);
+                    exchangeRates.put(element.getAttribute("currency"), Double.parseDouble(element.getAttribute("rate")));
                 }
             }
         } catch (Exception e) {
@@ -76,39 +68,73 @@ public class ExchangeRateService {
         LocalDate startDate = today.minusDays(90);
 
         for (LocalDate date = startDate; date.isBefore(today); date = date.plusDays(1)) {
-            if (exchangeRateRepository.findByCurrencyAndDate("USD", date).isEmpty()) {
+            if (exchangeRateRepository.findByDate(date).isEmpty()) {
                 saveExchangeRatesForDate(date);
             }
         }
     }
 
-    private void saveExchangeRatesForDate(LocalDate date) {
-        logger.info("Saving rates per date {}", date);
-        String xmlData = fetchExchangeRates();
-        Map<String, Double> rates = parseXML(xmlData);
+    public void saveExchangeRatesForDate(LocalDate date) {
+        logger.info("Saving exchange rates for {}", date);
+        Map<String, Double> rates = parseXML(fetchExchangeRates());
 
-        for (Map.Entry<String, Double> entry : rates.entrySet()) {
-            ExchangeRate exchangeRate = new ExchangeRate(entry.getKey(), entry.getValue(), date);
-            exchangeRateRepository.save(exchangeRate);
-            logger.info("Saved: {} = {} (Date: {})", entry.getKey(), entry.getValue(), date);
-        }
+        rates.forEach((currency, rate) -> {
+            if (exchangeRateRepository.findByCurrencyAndDate(currency, date).isEmpty()) {
+                exchangeRateRepository.save(new ExchangeRate(currency, rate, date));
+                logger.info("Saved: {} = {} (Date: {})", currency, rate, date);
+            }
+        });
     }
 
     public List<Map<String, Object>> getHistory(String currency) {
-        List<ExchangeRate> rates = exchangeRateRepository.findByCurrency(currency);
-    
-        return rates.stream()
-            .map(rate -> Map.<String, Object>of( 
-                "date", rate.getDate().toString(),
-                "rate", rate.getRate()
-            ))
-            .collect(Collectors.toList());
+        return exchangeRateRepository.findByCurrencyOrderByDateDesc(currency)
+                .stream()
+                .map(rate -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("date", rate.getDate().toString());
+                    map.put("rate", rate.getRate());
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 
     public Set<String> getAvailableCurrencies() {
-        Map<String, Double> exchangeRates = getExchangeRates();
-        return exchangeRates.keySet();
+        try {
+            List<String> currencies = exchangeRateRepository.getDistinctCurrencies();
+            logger.info("Fetched currencies from DB: {}", currencies);
+
+            if (currencies.isEmpty()) {
+                logger.warn("No currencies found in the database.");
+                throw new RuntimeException("No currencies found.");
+            }
+            return new HashSet<>(currencies);
+        } catch (Exception e) {
+            logger.error("Error fetching currencies: {}", e.getMessage());
+            throw new RuntimeException("Error fetching currencies: " + e.getMessage());
+        }
     }
 
-    
+    public Map<String, Object> convertCurrency(double amount, String fromCurrency, String toCurrency) {
+        Map<String, Double> rates = parseXML(fetchExchangeRates());
+
+        if (!rates.containsKey(fromCurrency) || !rates.containsKey(toCurrency)) {
+            logger.warn("Invalid currency conversion request: {} to {}", fromCurrency, toCurrency);
+            return Map.of(
+                    "error", "Invalid currency provided",
+                    "fromCurrency", fromCurrency,
+                    "toCurrency", toCurrency
+            );
+        }
+
+        double exchangeRate = rates.get(toCurrency) / rates.get(fromCurrency);
+        double convertedAmount = amount * exchangeRate;
+
+        return Map.of(
+                "fromCurrency", fromCurrency,
+                "toCurrency", toCurrency,
+                "amount", amount,
+                "convertedAmount", convertedAmount,
+                "exchangeRate", exchangeRate
+        );
+    }
 }
