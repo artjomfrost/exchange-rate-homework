@@ -28,7 +28,7 @@ cd exchange-rate-homework
 ```
 ---
 
-### 2️ Start the Backend (Spring Boot)
+### 2 Start the Backend (Spring Boot)
 ```sh
 cd backend
 mvn clean package
@@ -36,7 +36,7 @@ mvn spring-boot:run
 ```
 ---
 
-### 3️ Start the Frontend (Angular)
+### 3 Start the Frontend (Angular)
 ```sh
 cd frontend
 npm install
