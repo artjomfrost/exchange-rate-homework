@@ -1,7 +1,7 @@
 # Currency Exchange Portal
 
 ### Description
-A web application that provides **real-time exchange rates** and a **currency converter** based on the **European Central Bank (ECB)** data.
+A web application that provides real-time exchange rates** and a **currency converter** based on the **European Central Bank (ECB)** data.
 
 ### Features:
  Automatically fetches and updates exchange rates daily (Quartz + Spring Boot)  

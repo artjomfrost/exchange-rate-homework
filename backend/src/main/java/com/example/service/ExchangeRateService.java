@@ -48,7 +48,7 @@ public class ExchangeRateService {
             Document document = builder.parse(new ByteArrayInputStream(xmlData.getBytes(StandardCharsets.UTF_8)));
 
             NodeList cubes = document.getElementsByTagName("Cube");
-            exchangeRates.put("EUR", 1.0); // Евро - базовая валюта
+            exchangeRates.put("EUR", 1.0);
 
             for (int i = 0; i < cubes.getLength(); i++) {
                 Element element = (Element) cubes.item(i);
